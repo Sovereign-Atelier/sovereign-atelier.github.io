@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Sovereign Atelier makes Android applications. The first is Noonmark, a task list that stays on the phone.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23232627'/%3E%3Crect x='10' y='31' width='44' height='2' fill='%23A88154'/%3E%3Cpath d='M32 20 42 32 32 44 22 32Z' fill='%23A88154'/%3E%3C/svg%3E">
+<title>Sovereign Atelier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;500;700&display=swap">
+<style>
+/* Layout: one hairline day-line carries the eye down the page. The Underside turns the page inside out. */
+:root {
+  --paper: #F4F3EF;
+  --surface: #FFFFFF;
+  --ink: #141414;
+  --ink-2: #6B6B6B;
+  --brass: #A88154;
+  --brass-text: #886844;
+  --rule: #E5E3DD;
+  --frame: #CFCCC3;
+  --alert: #8C4A3F;
+  --press: rgba(20, 20, 20, 0.05);
+  --scrim: rgba(20, 20, 20, 0.38);
+  --tile: #232627;
+  --lin-bg: #121211;
+  --lin-ink: #EDEAE2;
+  --lin-ink-2: #9A948A;
+  --lin-rule: #2B2A27;
+  --lin-brass: #C29A63;
+  --font: "Zen Kaku Gothic New", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --app-font: Roboto, system-ui, -apple-system, "Segoe UI", "Helvetica Neue", sans-serif;
+  --gutter: 24px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121211;
+    --surface: #1B1B19;
+    --ink: #EDEAE2;
+    --ink-2: #9A948A;
+    --brass: #C29A63;
+    --brass-text: #C29A63;
+    --rule: #2B2A27;
+    --frame: #3B3A36;
+    --alert: #C07A6A;
+    --press: rgba(237, 234, 226, 0.06);
+    --scrim: rgba(18, 18, 17, 0.62);
+    --lin-bg: #F4F3EF;
+    --lin-ink: #141414;
+    --lin-ink-2: #6B6B6B;
+    --lin-rule: #D6D3CB;
+    --lin-brass: #A88154;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121211;
+  --surface: #1B1B19;
+  --ink: #EDEAE2;
+  --ink-2: #9A948A;
+  --brass: #C29A63;
+  --brass-text: #C29A63;
+  --rule: #2B2A27;
+  --frame: #3B3A36;
+  --alert: #C07A6A;
+  --press: rgba(237, 234, 226, 0.06);
+  --scrim: rgba(18, 18, 17, 0.62);
+  --lin-bg: #F4F3EF;
+  --lin-ink: #141414;
+  --lin-ink-2: #6B6B6B;
+  --lin-rule: #D6D3CB;
+  --lin-brass: #A88154;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--paper);
+  z-index: 10;
+}
+h1, h2, h3, h4, p, dl, dd, figure { margin: 0; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--brass-text); outline-offset: 3px; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* The shared pieces */
+.inner {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-left: max(var(--gutter), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--gutter), env(safe-area-inset-right, 0px));
+}
+@media (min-width: 900px) { :root { --gutter: 48px; } }
+.label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  line-height: 1.4;
+}
+.display {
+  font-weight: 300;
+  letter-spacing: -0.025em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+.dot { color: var(--brass); }
+.band { padding-block: clamp(72px, 11vw, 152px); }
+.rule-top { border-top: 1px solid var(--rule); }
+
+/* The day-line that follows the reader */
+.dayline {
+  position: fixed;
+  left: 0; right: 0;
+  top: env(safe-area-inset-top, 0px);
+  height: 11px;
+  z-index: 11;
+  pointer-events: none;
+}
+.dayline::before {
+  content: "";
+  position: absolute; left: 0; right: 0; top: 5px;
+  height: 1px;
+  background: var(--brass);
+  opacity: 0.55;
+}
+.dayline svg {
+  position: absolute; top: 0;
+  left: calc(var(--p, 0) * (100% - 9px));
+  width: 9px; height: 11px;
+  fill: var(--brass);
+}
+
+/* Header */
+.top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 28px;
+  gap: 16px;
+}
+.top nav { display: flex; gap: 0; margin-right: -8px; }
+.top nav a {
+  display: inline-flex; align-items: center;
+  min-height: 48px; padding: 0 8px;
+  text-decoration: none;
+}
+@media (min-width: 640px) { .top nav { gap: 8px; } .top nav a { padding: 0 12px; } }
+.top nav a:hover { color: var(--brass-text); }
+.top .label { color: var(--ink); }
+
+/* Hero */
+.hero { padding-top: clamp(40px, 8vw, 104px); padding-bottom: clamp(56px, 9vw, 120px); }
+.hero h1 {
+  font-size: clamp(2.9rem, 10.4vw, 9.6rem);
+  margin-top: clamp(20px, 3vw, 36px);
+}
+.horizon {
+  position: relative;
+  height: 40px;
+  margin-top: clamp(40px, 7vw, 96px);
+}
+.horizon::before {
+  content: "";
+  position: absolute; left: 0; right: 0; top: 50%;
+  height: 1px; background: var(--brass);
+}
+.horizon svg {
+  position: absolute; left: 50%; top: 50%;
+  width: 26px; height: 32px;
+  fill: var(--brass);
+  translate: -50% -50%;
+  animation: arrive 1100ms cubic-bezier(0.16, 0.7, 0.2, 1) 1;
+}
+@keyframes arrive {
+  from { translate: calc(-50% - 46vw) -50%; }
+  to   { translate: -50% -50%; }
+}
+.hero-foot {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: 24px;
+  margin-top: clamp(32px, 5vw, 64px);
+  row-gap: 24px;
+}
+.lede {
+  grid-column: 1 / -1;
+  font-size: clamp(1.25rem, 2.1vw, 1.625rem);
+  font-weight: 300;
+  line-height: 1.5;
+  max-width: 30em;
+  text-wrap: pretty;
+}
+.go {
+  grid-column: 1 / -1;
+  align-self: start;
+  color: var(--brass-text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 7px;
+  display: inline-flex; align-items: center; min-height: 48px;
+  width: fit-content;
+}
+@media (min-width: 900px) {
+  .lede { grid-column: 5 / span 6; }
+  .go { grid-column: 5 / span 4; }
+}
+.go.label { color: var(--brass-text); }
+
+/* The work */
+.work-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(48px, 7vw, 96px);
+  align-items: start;
+}
+@media (min-width: 900px) {
+  .work-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+}
+.work h2 {
+  font-size: clamp(2.6rem, 7.5vw, 5.6rem);
+  margin-top: 16px;
+}
+.work .prose { margin-top: clamp(24px, 3vw, 40px); display: grid; gap: 1.1em; max-width: 34em; text-wrap: pretty; }
+.facts { margin-top: clamp(32px, 4vw, 48px); max-width: 34em; border-top: 1px solid var(--rule); }
+.facts div {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--rule);
+  align-items: baseline;
+}
+.facts dt { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-2); }
+.facts dd { font-variant-numeric: tabular-nums; }
+
+/* The drawing of the app */
+.device { display: grid; gap: 20px; justify-items: center; }
+.phone {
+  position: relative;
+  width: min(100%, 340px);
+  height: 640px;
+  border: 1px solid var(--frame);
+  border-radius: 38px;
+  background: var(--paper);
+  overflow: hidden;
+  font-family: var(--app-font);
+  color: var(--ink);
+  line-height: 1.3;
+}
+.layer { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.p-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 40px 24px 8px; }
+.p-title { font-size: 36px; font-weight: 300; letter-spacing: -0.5px; line-height: 1.1; }
+.p-date { margin-top: 6px; font-size: 14px; color: var(--ink-2); letter-spacing: 0.1px; }
+.p-gear { width: 48px; height: 48px; margin: -8px -12px 0 0; display: grid; place-items: center; color: var(--ink-2); }
+.p-gear svg { width: 22px; height: 22px; }
+.p-list { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 24px 16px; overscroll-behavior: contain; }
+.sec {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase;
+  color: var(--ink-2);
+  padding: 26px 0 2px;
+}
+.sec:first-child { padding-top: 10px; }
+.sec.overdue { color: var(--alert); }
+.row {
+  position: relative;
+  display: flex; align-items: flex-start; gap: 16px;
+  width: 100%;
+  padding: 16px 0;
+  background: none; border: 0; border-radius: 0;
+  font: inherit; color: inherit; text-align: left;
+  cursor: pointer;
+  transition: background-color 180ms ease-out;
+  -webkit-tap-highlight-color: transparent;
+}
+.row:hover, .row:active { background: var(--press); }
+.row + .row::before {
+  content: ""; position: absolute; left: 40px; right: 0; top: 0; height: 1px; background: var(--rule);
+}
+.ring {
+  flex: none;
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 1.5px solid var(--ink-2);
+  display: grid; place-items: center;
+  transition: border-color 180ms ease-out, background-color 180ms ease-out;
+}
+.ring svg { width: 14px; height: 14px; stroke: var(--brass); fill: none; stroke-width: 2; opacity: 0; transition: opacity 180ms ease-out; }
+.txt { display: grid; gap: 4px; min-width: 0; }
+.ttl {
+  font-size: 17px; font-weight: 500; letter-spacing: 0.2px; line-height: 1.3;
+  text-decoration: line-through transparent;
+  text-decoration-color: transparent;
+  transition: color 180ms ease-out, text-decoration-color 180ms ease-out;
+  overflow-wrap: anywhere;
+}
+.sub { font-size: 13px; font-weight: 500; letter-spacing: 0.2px; color: var(--ink-2); }
+.sub.overdue { color: var(--alert); }
+.row[aria-pressed="true"] .ring { border-color: var(--brass); background: var(--press); }
+.row[aria-pressed="true"] .ring svg { opacity: 1; }
+.row[aria-pressed="true"] .ttl { color: var(--ink-2); font-weight: 400; text-decoration: line-through; text-decoration-color: var(--ink-2); }
+.p-empty { flex: 1; display: grid; place-content: center; text-align: center; padding: 0 24px; gap: 8px; }
+.p-empty p:first-child { font-size: 18px; letter-spacing: 0.1px; }
+.p-empty p:last-child { font-size: 14px; color: var(--ink-2); }
+.p-capture {
+  margin: 0 24px 24px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 18px 0;
+  background: var(--ink); color: var(--paper);
+  border: 0; border-radius: 4px;
+  font: 500 16px/1.2 var(--app-font); letter-spacing: 0.5px;
+  cursor: pointer;
+}
+.p-capture svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+.scrim {
+  position: absolute; inset: 0; background: var(--scrim);
+  opacity: 0; visibility: hidden;
+  transition: opacity 180ms ease-out, visibility 0s linear 180ms;
+}
+.sheet {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--rule);
+  border-radius: 12px 12px 0 0;
+  padding: 24px 24px 24px;
+  transform: translateY(100%);
+  visibility: hidden;
+  transition: transform 180ms ease-out, visibility 0s linear 180ms;
+}
+.phone.open .scrim { opacity: 1; visibility: visible; transition: opacity 180ms ease-out; }
+.phone.open .sheet { transform: none; visibility: visible; transition: transform 180ms ease-out; }
+.field {
+  width: 100%;
+  background: none; border: 0; border-bottom: 1px solid var(--frame);
+  border-radius: 0;
+  padding: 10px 0 12px;
+  font: 400 19px/1.3 var(--app-font); color: var(--ink);
+  caret-color: var(--brass);
+}
+.field::placeholder { color: var(--ink-2); opacity: 1; }
+.field:focus { outline: none; border-bottom-color: var(--brass); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.chip {
+  min-height: 48px; padding: 0 16px;
+  background: none; color: var(--ink-2);
+  border: 1px solid var(--rule); border-radius: 4px;
+  font: 500 14px/1 var(--app-font); letter-spacing: 0.3px;
+  cursor: pointer;
+}
+.chip[aria-checked="true"] { color: var(--ink); border-color: var(--ink); }
+.save-row { display: flex; justify-content: flex-end; margin-top: 12px; }
+.save {
+  min-height: 48px; padding: 0 16px;
+  background: none; border: 0;
+  color: var(--brass-text);
+  font: 700 14px/1 var(--app-font); letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.modes { display: flex; gap: 8px; }
+.modes button {
+  min-height: 48px; padding: 0 12px;
+  background: none; border: 0; border-bottom: 2px solid transparent; border-radius: 0;
+  color: var(--ink-2);
+  font: 500 0.72rem/1 var(--font); letter-spacing: 0.16em; text-transform: uppercase;
+  cursor: pointer;
+}
+.modes button[aria-pressed="true"] { color: var(--ink); border-bottom-color: var(--brass); }
+.device figcaption { max-width: 22em; text-align: center; font-size: 0.875rem; line-height: 1.55; color: var(--ink-2); text-wrap: pretty; }
+
+/* The name */
+.name-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(32px, 5vw, 64px); align-items: center; }
+@media (min-width: 900px) { .name-grid { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); } }
+.tile { width: clamp(120px, 22vw, 200px); height: auto; display: block; }
+.tile rect.bg { fill: var(--tile); }
+.tile .m { fill: var(--brass); }
+.name p.big {
+  font-size: clamp(1.6rem, 3.7vw, 2.9rem);
+  font-weight: 300; line-height: 1.22; letter-spacing: -0.015em;
+  text-wrap: balance;
+  margin-top: 20px;
+}
+.name p.small { margin-top: 24px; color: var(--ink-2); max-width: 32em; font-size: 0.9375rem; }
+
+/* What it refuses */
+.refused h2 { font-size: clamp(2.2rem, 6vw, 4.4rem); margin-top: 16px; max-width: 14em; }
+.refusals {
+  list-style: none; margin: clamp(40px, 6vw, 80px) 0 0; padding: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr);
+  gap: 40px clamp(32px, 6vw, 96px);
+}
+@media (min-width: 760px) { .refusals { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.refusals li { position: relative; border-top: 1px solid var(--rule); padding-top: 22px; }
+.refusals li::before {
+  content: ""; position: absolute; left: 0; top: -1px; width: 28px; height: 2px; background: var(--brass);
+}
+.refusals h3 { font-size: clamp(1.45rem, 2.6vw, 1.9rem); font-weight: 300; letter-spacing: -0.01em; line-height: 1.2; }
+.refusals p { margin-top: 10px; color: var(--ink-2); max-width: 28em; font-size: 1rem; text-wrap: pretty; }
+
+/* The underside: the page turned inside out */
+.lining { background: var(--lin-bg); color: var(--lin-ink); }
+.lining .label, .lining .sub-label { color: var(--lin-ink-2); }
+.lining h2 { font-size: clamp(2.4rem, 7vw, 5.2rem); margin-top: 16px; max-width: 12em; }
+.lining .intro { margin-top: clamp(20px, 3vw, 32px); max-width: 32em; font-size: clamp(1.1rem, 1.8vw, 1.3rem); font-weight: 300; line-height: 1.5; text-wrap: pretty; }
+.parts {
+  margin-top: clamp(48px, 7vw, 88px);
+  display: grid; grid-template-columns: minmax(0, 1fr);
+  gap: 36px clamp(28px, 4vw, 64px);
+}
+@media (min-width: 640px) { .parts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .parts { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.part { border-top: 1px solid var(--lin-rule); padding-top: 18px; display: grid; gap: 10px; align-content: start; }
+.part p { max-width: 24em; text-wrap: pretty; font-variant-numeric: tabular-nums; }
+.specimen { margin-top: clamp(64px, 9vw, 120px); border-top: 1px solid var(--lin-rule); padding-top: 28px; }
+.specimen .head { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; align-items: baseline; }
+.specimen .lead { margin-top: 12px; max-width: 30em; font-weight: 300; font-size: 1.2rem; line-height: 1.45; }
+.log { margin-top: 32px; display: grid; }
+.log div {
+  display: grid; grid-template-columns: minmax(0, 1fr);
+  gap: 6px 32px;
+  padding: 18px 0;
+  border-top: 1px solid var(--lin-rule);
+}
+@media (min-width: 760px) { .log div { grid-template-columns: 13rem minmax(0, 1fr); } }
+.log dt { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--lin-ink-2); line-height: 1.8; }
+.log dd { max-width: 40em; font-variant-numeric: tabular-nums; text-wrap: pretty; }
+.log dd p + p { margin-top: 10px; }
+.log code { font-family: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, "Liberation Mono", monospace; font-size: 0.9em; }
+
+/* Contact: the app's own empty screen */
+.contact { padding-block: clamp(72px, 11vw, 144px) clamp(48px, 6vw, 72px); }
+.empty { text-align: center; display: grid; gap: 10px; justify-items: center; }
+.empty p:first-child { font-size: clamp(1.4rem, 2.6vw, 1.9rem); font-weight: 300; letter-spacing: 0.005em; }
+.empty p:last-child { color: var(--ink-2); font-size: 1rem; }
+.capture {
+  margin: clamp(36px, 5vw, 56px) auto 0;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; max-width: 28rem;
+  padding: 18px 0; min-height: 56px;
+  background: var(--ink); color: var(--paper);
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 1rem; font-weight: 500; letter-spacing: 0.5px;
+}
+.capture svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+.capture:focus-visible { outline-offset: 4px; }
+.address { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: center; }
+.address .addr { user-select: all; -webkit-user-select: all; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.copy {
+  min-height: 48px; padding: 0 16px;
+  background: none; color: var(--brass-text);
+  border: 1px solid var(--rule); border-radius: 4px;
+  font: 500 0.72rem/1 var(--font); letter-spacing: 0.16em; text-transform: uppercase;
+  cursor: pointer;
+}
+.foot { margin-top: clamp(64px, 9vw, 112px); padding-top: 24px; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; gap: 8px 32px; justify-content: space-between; color: var(--ink-2); font-size: 0.875rem; }
+.foot p { max-width: 36em; text-wrap: pretty; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="dayline" aria-hidden="true">
+  <svg viewBox="0 0 9 11"><path d="M4.5 0 9 5.5 4.5 11 0 5.5Z"/></svg>
+</div>
+
+<header class="inner top">
+  <p class="label">Sovereign Atelier</p>
+  <nav class="label" aria-label="Sections">
+    <a href="#work">Work</a>
+    <a href="#contact">Contact</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="inner">
+      <p class="label">Android applications</p>
+      <h1 class="display">One edge.<br>Nothing extra<span class="dot">.</span></h1>
+    </div>
+    <div class="horizon" aria-hidden="true">
+      <svg viewBox="0 0 26 32"><path d="M13 0 26 16 13 32 0 16Z"/></svg>
+    </div>
+    <div class="inner hero-foot">
+      <p class="lede">I make Android applications. The first is Noonmark, a task list that stays on the phone and answers a single question. What requires me now.</p>
+      <a class="go label" href="#work">See Noonmark</a>
+    </div>
+  </section>
+
+  <section class="band work rule-top" id="work" aria-labelledby="work-h">
+    <div class="inner work-grid">
+      <div>
+        <p class="label">The work</p>
+        <h2 class="display" id="work-h">Noonmark</h2>
+        <div class="prose">
+          <p>Noonmark is a task list for Android. You capture a thought in a few words and it asks for nothing else. A day is optional, and it is never a time. The main screen sorts what you have into Overdue, Today, Upcoming and Anytime, and says so in one quiet line when nothing requires you.</p>
+          <p>Tap a row to finish it. Swipe to delete, with five seconds to undo. A finished task leaves the list the day after. Backup saves everything to a plain JSON file where you choose, and Restore reads one back.</p>
+        </div>
+        <dl class="facts">
+          <div><dt>Platform</dt><dd>Android</dd></div>
+          <div><dt>Version</dt><dd>0.2.1</dd></div>
+          <div><dt>Built with</dt><dd>Flutter and SQLite</dd></div>
+          <div><dt>Data</dt><dd>On the phone only</dd></div>
+          <div><dt>Network</dt><dd>None in the release build</dd></div>
+          <div><dt>Permissions</dt><dd>None requested</dd></div>
+        </dl>
+      </div>
+
+      <figure class="device">
+        <div class="phone" id="phone" role="group" aria-label="A drawing of the Noonmark Today screen">
+          <div class="layer" id="layer">
+            <div class="p-head">
+              <div>
+                <h3 class="p-title">Today</h3>
+                <p class="p-date">Monday, 2 November</p>
+              </div>
+              <span class="p-gear" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <circle cx="12" cy="12" r="8.6" stroke-width="3" stroke-dasharray="3.4 3.4" />
+                  <circle cx="12" cy="12" r="6.4" />
+                  <circle cx="12" cy="12" r="2.4" />
+                </svg>
+              </span>
+            </div>
+            <div class="p-list" id="list" aria-live="off"></div>
+            <div class="p-empty" id="empty" hidden>
+              <p>Nothing requires you today.</p>
+              <p>Capture a thought below.</p>
+            </div>
+            <button class="p-capture" id="open" type="button">
+              <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3v12M3 9h12"/></svg>
+              Capture thought
+            </button>
+          </div>
+          <div class="scrim" id="scrim"></div>
+          <form class="sheet" id="sheet" role="dialog" aria-label="Capture thought" autocomplete="off">
+            <label class="sr-only" for="title">What must be done?</label>
+            <input class="field" id="title" name="title" type="text" placeholder="What must be done?" maxlength="120">
+            <div class="chips" role="radiogroup" aria-label="Day">
+              <button class="chip" type="button" role="radio" aria-checked="true" data-day="none">No date</button>
+              <button class="chip" type="button" role="radio" aria-checked="false" data-day="today">Today</button>
+              <button class="chip" type="button" role="radio" aria-checked="false" data-day="tomorrow">Tomorrow</button>
+            </div>
+            <div class="save-row"><button class="save" type="submit">Save</button></div>
+          </form>
+        </div>
+        <div class="modes" role="group" aria-label="What the drawing shows">
+          <button type="button" id="m-sample" aria-pressed="true">Sample list</button>
+          <button type="button" id="m-empty" aria-pressed="false">Empty list</button>
+        </div>
+        <figcaption>A drawing from the app's own words, sizes and colours. It is not a screenshot. The tasks are samples, and the date rail is left out.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="band name rule-top" aria-labelledby="name-h">
+    <div class="inner name-grid">
+      <svg class="tile" viewBox="0 0 160 160" role="img" aria-label="The Noonmark launcher mark, redrawn flat: a brass diamond on a horizontal line, on a dark tile">
+        <rect class="bg" width="160" height="160" rx="36"/>
+        <rect class="m" x="28" y="78" width="104" height="4"/>
+        <path class="m" d="M80 54 102 80 80 106 58 80Z"/>
+      </svg>
+      <div>
+        <p class="label" id="name-h">The name</p>
+        <p class="big">The mark the sun makes on a meridian line at noon: a fixed mark read by daylight to know where you are.</p>
+        <p class="small">The launcher mark is a brass diamond set on a horizontal day-line. The sentence above is from the decision log, 13 October 2026.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="band refused rule-top" aria-labelledby="ref-h">
+    <div class="inner">
+      <p class="label">Refused</p>
+      <h2 class="display" id="ref-h">What Noonmark will not do.</h2>
+      <ul class="refusals">
+        <li>
+          <h3>No streaks. No badges.</h3>
+          <p>Overdue is stated in one muted tone. There are no failure counts, no sharing prompts and no cheering.</p>
+        </li>
+        <li>
+          <h3>No account.</h3>
+          <p>There is no sign-in and no server. Your tasks live in a private database on the phone.</p>
+        </li>
+        <li>
+          <h3>No network.</h3>
+          <p>The release build makes no network requests, and the app asks Android for no permissions.</p>
+        </li>
+        <li>
+          <h3>No time of day.</h3>
+          <p>A task can have a day. It never has an hour.</p>
+        </li>
+        <li>
+          <h3>No analytics. No ads.</h3>
+          <p>It collects no data. Not a little, not anonymous, not metadata.</p>
+        </li>
+        <li>
+          <h3>No promise it cannot keep.</h3>
+          <p>Copy that claims what the build does not do is on the never list. Every line is checked against the code before it ships.</p>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="band lining" aria-labelledby="und-h">
+    <div class="inner">
+      <p class="label">The underside</p>
+      <h2 class="display" id="und-h">Finished like the front.</h2>
+      <p class="intro">A coat is judged inside out, and its lining is finished like the front. These are the parts of Noonmark that nobody opens.</p>
+
+      <div class="parts">
+        <div class="part"><p class="label">Tests</p><p>15 automated tests cover how tasks are sorted into days, how a backup file is checked, and the contrast of the accent text.</p></div>
+        <div class="part"><p class="label">Contrast</p><p>Accent text reaches 4.5:1 against its ground in light and in dark, and a test fails if it does not.</p></div>
+        <div class="part"><p class="label">Touch</p><p>The gear, close and add-step buttons are padded to 48 dp, the size Android asks for touch targets.</p></div>
+        <div class="part"><p class="label">Motion</p><p>Animation runs about 180 ms and eases out. It stops when the phone asks for reduced motion.</p></div>
+        <div class="part"><p class="label">Restore</p><p>Restore reads the whole backup file before it changes anything. A damaged file is refused with one sentence, and the sentence ends: Nothing changed.</p></div>
+        <div class="part"><p class="label">Libraries</p><p>Three libraries. A new one needs a written decision first, and three unused ones were removed.</p></div>
+      </div>
+
+      <div class="specimen">
+        <div class="head">
+          <p class="label">A decision, as written</p>
+          <p class="label sub-label">Decision log, 29 October 2026. Excerpt.</p>
+        </div>
+        <p class="lead">Every decision is logged with the alternatives it beat and the condition that would reverse it.</p>
+        <dl class="log">
+          <div><dt>Decision</dt><dd>Add <code>palette.accentText</code>, used only for text. Light is 886844; dark equals the dark accent. The brass stays for rules, icons, borders and cursors.</dd></div>
+          <div><dt>Reason</dt><dd>Light-mode brass text read 3.54:1 on white and 3.19:1 on the page ground. 886844 reads 5.11:1 and 4.60:1.</dd></div>
+          <div><dt>Alternatives considered</dt><dd><p>Darkening the brass everywhere: rejected; it changes every rule and icon to fix text.</p><p>856642 for the text token: 4.76:1 on the page ground, a heavier bronze; kept as the fallback.</p></dd></div>
+          <div><dt>Reverse when</dt><dd>A scanner reads any text use below 4.5:1 (set the light accentText to 856642).</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact" id="contact" aria-labelledby="contact-h">
+    <div class="inner">
+      <h2 class="sr-only" id="contact-h">Contact</h2>
+      <div class="empty">
+        <p>Nothing more requires you here.</p>
+        <p>Write to me below.</p>
+      </div>
+      <a class="capture" href="mailto:sovereignatelier@duck.com">
+        <svg viewBox="0 0 18 18" aria-hidden="true"><path d="M9 3v12M3 9h12"/></svg>
+        Write to me
+      </a>
+      <div class="address">
+        <span class="addr" id="addr">sovereignatelier@duck.com</span>
+        <button class="copy" id="copy" type="button">Copy address</button>
+        <span class="sr-only" id="copied" role="status" aria-live="polite"></span>
+      </div>
+      <div class="foot">
+        <p>Noonmark is built by one bench. There is no data department, because there is no data.</p>
+        <p>© 2026 Sovereign Atelier. Noonmark is a trademark of Sovereign Atelier.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  /* The day-line follows the reader. */
+  var mark = document.querySelector(".dayline svg");
+  function place() {
+    var room = document.documentElement.scrollHeight - window.innerHeight;
+    var p = room > 0 ? Math.min(1, Math.max(0, window.scrollY / room)) : 0;
+    mark.parentNode.style.setProperty("--p", p.toFixed(4));
+  }
+  var queued = false;
+  window.addEventListener("scroll", function () {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(function () { queued = false; place(); });
+  }, { passive: true });
+  window.addEventListener("resize", place);
+  place();
+
+  /* The drawing of the app. */
+  var SAMPLE = [
+    { title: "Return the library books", sec: "overdue", meta: "Friday" },
+    { title: "Post the parcel", sec: "today", meta: "Today" },
+    { title: "Plan Saturday lunch", sec: "today", meta: "Today · 3 steps · notes" },
+    { title: "Dentist", sec: "upcoming", meta: "Thursday" },
+    { title: "Fix the bookshelf", sec: "anytime", meta: "" }
+  ];
+  var ORDER = [["overdue", "Overdue"], ["today", "Today"], ["upcoming", "Upcoming"], ["anytime", "Anytime"]];
+
+  var phone = document.getElementById("phone");
+  var layer = document.getElementById("layer");
+  var list = document.getElementById("list");
+  var empty = document.getElementById("empty");
+  var openBtn = document.getElementById("open");
+  var sheet = document.getElementById("sheet");
+  var scrim = document.getElementById("scrim");
+  var field = document.getElementById("title");
+  var chips = sheet.querySelectorAll(".chip");
+  var mSample = document.getElementById("m-sample");
+  var mEmpty = document.getElementById("m-empty");
+
+  var tasks = SAMPLE.map(function (t) { return { title: t.title, sec: t.sec, meta: t.meta, done: false }; });
+  var day = "none";
+
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function check() {
+    var s = document.createElementNS(SVGNS, "svg");
+    s.setAttribute("viewBox", "0 0 14 14");
+    s.setAttribute("aria-hidden", "true");
+    var p = document.createElementNS(SVGNS, "path");
+    p.setAttribute("d", "M2.5 7.4 5.6 10.4 11.5 3.8");
+    s.appendChild(p);
+    return s;
+  }
+
+  function render() {
+    list.textContent = "";
+    var any = tasks.length > 0;
+    empty.hidden = any;
+    list.hidden = !any;
+    if (!any) return;
+    ORDER.forEach(function (o) {
+      var rows = tasks.filter(function (t) { return t.sec === o[0]; });
+      if (!rows.length) return;
+      var h = document.createElement("h4");
+      h.className = "sec" + (o[0] === "overdue" ? " overdue" : "");
+      h.textContent = o[1];
+      list.appendChild(h);
+      rows.forEach(function (t) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "row";
+        b.setAttribute("aria-pressed", t.done ? "true" : "false");
+        var ring = document.createElement("span");
+        ring.className = "ring";
+        ring.setAttribute("aria-hidden", "true");
+        ring.appendChild(check());
+        var txt = document.createElement("span");
+        txt.className = "txt";
+        var ttl = document.createElement("span");
+        ttl.className = "ttl";
+        ttl.textContent = t.title;
+        txt.appendChild(ttl);
+        if (t.meta) {
+          var sub = document.createElement("span");
+          sub.className = "sub" + (t.sec === "overdue" ? " overdue" : "");
+          sub.textContent = t.meta;
+          txt.appendChild(sub);
+        }
+        b.appendChild(ring);
+        b.appendChild(txt);
+        b.addEventListener("click", function () {
+          t.done = !t.done;
+          b.setAttribute("aria-pressed", t.done ? "true" : "false");
+        });
+        list.appendChild(b);
+      });
+    });
+  }
+
+  function setMode(sample) {
+    tasks = sample ? SAMPLE.map(function (t) { return { title: t.title, sec: t.sec, meta: t.meta, done: false }; }) : [];
+    mSample.setAttribute("aria-pressed", sample ? "true" : "false");
+    mEmpty.setAttribute("aria-pressed", sample ? "false" : "true");
+    render();
+  }
+  mSample.addEventListener("click", function () { setMode(true); });
+  mEmpty.addEventListener("click", function () { setMode(false); });
+
+  function setOpen(on) {
+    phone.classList.toggle("open", on);
+    layer.inert = on;
+    if (on) {
+      field.value = "";
+      pick("none");
+      field.focus();
+    } else {
+      openBtn.focus();
+    }
+  }
+  function pick(d) {
+    day = d;
+    chips.forEach(function (c) { c.setAttribute("aria-checked", c.dataset.day === d ? "true" : "false"); });
+  }
+  chips.forEach(function (c) { c.addEventListener("click", function () { pick(c.dataset.day); }); });
+  openBtn.addEventListener("click", function () { setOpen(true); });
+  scrim.addEventListener("click", function () { setOpen(false); });
+  phone.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && phone.classList.contains("open")) { e.preventDefault(); setOpen(false); }
+  });
+  sheet.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var text = field.value.replace(/\s+/g, " ").trim();
+    if (!text) { field.focus(); return; }
+    var sec = day === "today" ? "today" : day === "tomorrow" ? "upcoming" : "anytime";
+    var meta = day === "today" ? "Today" : day === "tomorrow" ? "Tomorrow" : "";
+    tasks.push({ title: text, sec: sec, meta: meta, done: false });
+    if (mEmpty.getAttribute("aria-pressed") === "true") {
+      mEmpty.setAttribute("aria-pressed", "false");
+      mSample.setAttribute("aria-pressed", "false");
+    }
+    render();
+    setOpen(false);
+    var rows = list.querySelectorAll(".row");
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].querySelector(".ttl").textContent === text) { rows[i].scrollIntoView({ block: "nearest" }); }
+    }
+  });
+  render();
+
+  /* The address can be copied; the link may do nothing in some viewers. */
+  var copy = document.getElementById("copy");
+  var addr = document.getElementById("addr");
+  var said = document.getElementById("copied");
+  function selectAddr() {
+    var r = document.createRange();
+    r.selectNodeContents(addr);
+    var s = window.getSelection();
+    s.removeAllRanges();
+    s.addRange(r);
+  }
+  copy.addEventListener("click", function () {
+    var done = function (msg) {
+      copy.textContent = msg;
+      said.textContent = msg;
+      setTimeout(function () { copy.textContent = "Copy address"; said.textContent = ""; }, 2200);
+    };
+    try {
+      navigator.clipboard.writeText(addr.textContent).then(
+        function () { done("Copied"); },
+        function () { selectAddr(); done("Selected"); }
+      );
+    } catch (err) {
+      selectAddr();
+      done("Selected");
+    }
+  });
+})();
+</script>
+</body>
+</html>
